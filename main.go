@@ -46,7 +46,31 @@ func parseRow(data string) City {
 	return city
 }
 
-func readLinesFromFile(path string, cities []CityState) error {
+func processCity(city city, cities map[string]CityState) map[string]CityState {
+	if cities[city.name] {
+		if city.temp > cities[city.max] {
+			cities[city.name] = city.temp
+		}
+
+		if city.temp < cities[city.min] {
+			cities[city.name] = city.temp
+		}
+
+		cities[city.name].mean = cities[city.name].mean + city.temp / 2
+
+		return cities
+
+	} else {
+		var new CityState
+		new.name = city.name
+		new.max, new.min, new.mean = new.temp
+		cities[new.name] = new
+
+		return cities
+	}
+}
+
+func process(path string, cities map[string]CityState) error {
 	fileHandle, err := os.Open(path)
 
 	if err != nil {
@@ -65,6 +89,7 @@ func readLinesFromFile(path string, cities []CityState) error {
 				city := parseRow(textLine)
 
 				fmt.Printf("Temperature in %s is %.2f\n", city.name, city.temp)
+				process(city, cities)
 			}
 
 			break
@@ -77,6 +102,8 @@ func readLinesFromFile(path string, cities []CityState) error {
 		city := parseRow(textLine)
 
 		fmt.Printf("Temperature in %s is %.2f\n", city.name, city.temp)
+
+		process(city, cities)
 	}
 
 	return nil
@@ -85,7 +112,7 @@ func readLinesFromFile(path string, cities []CityState) error {
 func main() {
 	path := "/home/nvt-dev/projects/1brc/measurements.txt"
 
-	cities := []CityState{} // declare a slice to work with
+	cities := make(map[string]CityState) // use hash map for this
 
 	readLinesFromFile(path, cities)
 }
