@@ -46,24 +46,29 @@ func parseRow(data string) City {
 	return city
 }
 
-func processCity(city city, cities map[string]CityState) map[string]CityState {
-	if cities[city.name] {
-		if city.temp > cities[city.max] {
-			cities[city.name] = city.temp
+func processCity(city City, cities map[string]CityState) map[string]CityState {
+	_, ok := cities[city.name]
+	var new CityState
+
+	if ok {
+		new = cities[city.name]
+		if city.temp > cities[city.name].max {
+			new.max = city.temp
 		}
 
-		if city.temp < cities[city.min] {
-			cities[city.name] = city.temp
+		if city.temp < cities[city.name].min {
+			new.min = city.temp
 		}
 
-		cities[city.name].mean = cities[city.name].mean + city.temp / 2
+		new.mean = cities[city.name].mean + city.temp / 2
+
+		cities[city.name] = new
 
 		return cities
 
 	} else {
-		var new CityState
 		new.name = city.name
-		new.max, new.min, new.mean = new.temp
+		new.max, new.min, new.mean = city.temp, city.temp, city.temp
 		cities[new.name] = new
 
 		return cities
@@ -88,8 +93,7 @@ func process(path string, cities map[string]CityState) error {
 			if len(textLine) != 0 {
 				city := parseRow(textLine)
 
-				fmt.Printf("Temperature in %s is %.2f\n", city.name, city.temp)
-				process(city, cities)
+				processCity(city, cities)
 			}
 
 			break
@@ -101,9 +105,7 @@ func process(path string, cities map[string]CityState) error {
 
 		city := parseRow(textLine)
 
-		fmt.Printf("Temperature in %s is %.2f\n", city.name, city.temp)
-
-		process(city, cities)
+		processCity(city, cities)
 	}
 
 	return nil
@@ -114,5 +116,9 @@ func main() {
 
 	cities := make(map[string]CityState) // use hash map for this
 
-	readLinesFromFile(path, cities)
+	process(path, cities)
+
+	for k := range cities {
+		fmt.Printf("In %s we have max: %.2f, min: %.2f, average: %.2f\n", cities[k].name, cities[k].max, cities[k].min, cities[k].mean)
+	}
 }
