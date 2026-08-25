@@ -94,6 +94,8 @@ func processCity(city City, cities *sync.Map) *sync.Map {
 }
 
 func process_v2(path string, chunk Chunk, workerID int, wg *sync.WaitGroup, cities *sync.Map, workers int, size int) error {
+	defer wg.Done()
+
 	file, err := os.Open(path)
 
 	if err != nil {
@@ -166,6 +168,7 @@ func process_v2(path string, chunk Chunk, workerID int, wg *sync.WaitGroup, citi
 	}
 
 	close(jobs)
+	wg_subs.Wait()
 
 	return nil
 }
@@ -271,6 +274,8 @@ func main() {
 
 		fmt.Print("!!!")
 	}
+
+	wg.Wait()
 
 	cities.Range(func(key, value any) bool {
 		city_name := key.(string)
